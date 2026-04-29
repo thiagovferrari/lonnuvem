@@ -45,12 +45,35 @@ export default async function FolderPage({ params }: { params: Promise<{ slug: s
 
   return (
     <>
-      {/* Bot-friendly metadata for GPT crawler implicitly happens via next SSR HTML output */}
       <FolderClient 
         initialFolder={folderData} 
         initialFiles={filesData || []} 
         initialTexts={textsData || []} 
       />
+      
+      {/* Fallback explicit semantic block for strict dumb bots that scrape pure HTML without executing JS */}
+      <div style={{ display: 'none' }} aria-hidden="true" className="bot-seo-content">
+        <article>
+          <h1>{folderData.name} - Conteúdos da Pasta</h1>
+          <section>
+            <h2>Textos</h2>
+            {textsData?.map((tb) => (
+              <p key={tb.id}>{tb.content}</p>
+            ))}
+          </section>
+          <section>
+            <h2>Arquivos e Imagens</h2>
+            <ul>
+              {filesData?.map((f) => (
+                <li key={f.id}>
+                  {f.name} - <a href={f.url}>Link do arquivo</a>
+                  {f.type?.startsWith('image/') && <img src={f.url} alt={f.name} />}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </article>
+      </div>
     </>
   );
 }

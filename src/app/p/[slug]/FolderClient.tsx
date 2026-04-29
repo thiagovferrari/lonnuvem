@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { UploadCloud, FileText, Image as ImageIcon, File, Trash2, ExternalLink } from 'lucide-react';
+import { UploadCloud, FileText, Image as ImageIcon, File, Trash2, ExternalLink, Save } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import styles from './page.module.css';
 
@@ -174,6 +174,44 @@ export function FolderClient({
 
         <div>
           <div className={styles.sectionTitle}>
+            Blocos de Texto
+            <button className="btn-secondary" onClick={createTextBlock}>
+              <FileText size={16} /> Novo Bloco
+            </button>
+          </div>
+          <div className={styles.textBlocksList}>
+            {textBlocks.length === 0 && (
+              <div style={{ color: 'var(--text-secondary)' }}>Nenhum bloco de texto criado.</div>
+            )}
+            {textBlocks.map(tb => (
+              <div key={tb.id} className={styles.textBlock}>
+                <textarea 
+                  id={`text-${tb.id}`}
+                  defaultValue={tb.content}
+                  placeholder="Escreva algo aqui..."
+                />
+                <div className={styles.textBlockActions}>
+                  <button 
+                    className="btn-secondary" 
+                    onClick={() => {
+                      const val = (document.getElementById(`text-${tb.id}`) as HTMLTextAreaElement).value;
+                      updateTextBlock(tb.id, val);
+                      alert('Texto salvo!');
+                    }}
+                  >
+                    <Save size={16} /> Salvar
+                  </button>
+                  <button className="btn-icon" onClick={() => deleteTextBlock(tb.id)}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className={styles.sectionTitle}>
             Arquivos
           </div>
           <div className={styles.grid}>
@@ -204,34 +242,6 @@ export function FolderClient({
                 </div>
               )
             })}
-          </div>
-        </div>
-
-        <div>
-          <div className={styles.sectionTitle}>
-            Blocos de Texto
-            <button className="btn-secondary" onClick={createTextBlock}>
-              <FileText size={16} /> Novo Bloco
-            </button>
-          </div>
-          <div className={styles.textBlocksList}>
-            {textBlocks.length === 0 && (
-              <div style={{ color: 'var(--text-secondary)' }}>Nenhum bloco de texto criado.</div>
-            )}
-            {textBlocks.map(tb => (
-              <div key={tb.id} className={styles.textBlock}>
-                <textarea 
-                  defaultValue={tb.content}
-                  placeholder="Escreva algo aqui..."
-                  onBlur={(e) => updateTextBlock(tb.id, e.target.value)}
-                />
-                <div className={styles.textBlockActions}>
-                  <button className="btn-icon" onClick={() => deleteTextBlock(tb.id)}>
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
         

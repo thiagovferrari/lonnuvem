@@ -275,31 +275,10 @@ export function FolderClient({
     <>
       <div className="page-header">
         <h1 className="page-title">{folder.name}</h1>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button className="btn-secondary" onClick={copyAllLinks}>
-            <ExternalLink size={16} /> Copiar Links
-          </button>
-          <button className="btn-primary" onClick={generatePublicPage} disabled={generatingLink}>
-            {generatingLink ? <Loader2 size={16} className="spinning" /> : <Share2 size={16} />}
-            {generatingLink ? 'Gerando...' : 'Gerar Link para IA'}
-          </button>
-        </div>
+        <button className="btn-secondary" onClick={copyAllLinks}>
+          <ExternalLink size={16} /> Copiar Links
+        </button>
       </div>
-
-      {publicLink && (
-        <div style={{ 
-          margin: '0 32px 16px', 
-          padding: '12px 16px', 
-          background: '#ecfdf5', 
-          border: '1px solid #a7f3d0', 
-          borderRadius: '12px',
-          fontSize: '13px',
-          wordBreak: 'break-all'
-        }}>
-          <strong>Link público (cole no ChatGPT):</strong><br/>
-          <a href={publicLink} target="_blank" rel="noreferrer" style={{ color: '#059669' }}>{publicLink}</a>
-        </div>
-      )}
 
       <div className={styles.container}>
         <div 

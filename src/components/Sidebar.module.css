@@ -1,0 +1,94 @@
+.sidebar {
+  width: 280px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  gap: 32px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+}
+
+.logoIcon {
+  width: 32px;
+  height: 32px;
+  background: var(--accent-color);
+  color: white;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoText {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.5px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.navItem:hover {
+  background: rgba(0,0,0,0.03);
+  color: var(--text-primary);
+}
+
+.navItem.active {
+  background: white;
+  color: var(--accent-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.storage {
+  margin-top: auto;
+  padding: 16px;
+  background: rgba(255,255,255,0.5);
+  border-radius: var(--radius-md);
+}
+
+.storageHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.storageBar {
+  height: 6px;
+  background: rgba(0,0,0,0.1);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.storageFill {
+  height: 100%;
+  background: var(--accent-color);
+  border-radius: var(--radius-full);
+}
+
+.storageText {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}

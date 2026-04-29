@@ -1,0 +1,71 @@
+.container {
+  padding: 0 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.statsCard {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.statsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.percentage {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+.barContainer {
+  height: 16px;
+  background: var(--bg-color);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--accent-color);
+  border-radius: var(--radius-full);
+  transition: width 1s ease-out;
+}
+
+.details {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.filesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fileItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px;
+  background: white;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: var(--shadow-sm);
+}

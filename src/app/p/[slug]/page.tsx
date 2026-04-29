@@ -111,8 +111,16 @@ export default function FolderPage({ params }: { params: Promise<{ slug: string 
           type: file.type
         };
 
-        const { data } = await supabase.from('lon_files').insert([newFile]).select();
-        if (data) setFiles(prev => [data[0], ...prev]);
+        const { data, error: dbError } = await supabase.from('lon_files').insert([newFile]).select();
+        if (dbError) {
+          console.error("DB Error:", dbError);
+          alert("Erro ao salvar arquivo no banco: " + dbError.message);
+        } else if (data) {
+          setFiles(prev => [data[0], ...prev]);
+        }
+      } else {
+        console.error("Upload Error:", uploadError);
+        alert("Erro no upload do arquivo: " + uploadError.message);
       }
     }
     setUploading(false);

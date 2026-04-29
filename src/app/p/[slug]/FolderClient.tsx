@@ -151,67 +151,100 @@ export function FolderClient({
     }
   }
 
-  // Generate a plain text file with all links and upload to Supabase Storage
+  // Create a Telegraph page with all images and texts - GPT can read telegra.ph perfectly
   async function generatePublicPage() {
     setGeneratingLink(true);
     
-    const imageFiles = files.filter(f => f.type?.startsWith('image/'));
-    const otherFiles = files.filter(f => !f.type?.startsWith('image/'));
-
-    let txt = `PASTA: ${folder.name}\n`;
-    txt += `Lon Nuvem - Pasta Publica\n`;
-    txt += `${files.length} arquivo(s) | ${textBlocks.length} bloco(s) de texto\n`;
-    txt += `${'='.repeat(60)}\n\n`;
-
-    if (textBlocks.length > 0) {
-      txt += `--- BLOCOS DE TEXTO ---\n\n`;
-      textBlocks.forEach((tb, i) => {
-        txt += `[Texto ${i + 1}]\n${tb.content || '(vazio)'}\n\n`;
+    try {
+      // 1. Create Telegraph account (or reuse)
+      const accRes = await fetch('https://api.telegra.ph/createAccount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          short_name: 'LonNuvem',
+          author_name: 'Lon Nuvem Drive',
+        }),
       });
-    }
+      const accData = await accRes.json();
+      
+      if (!accData.ok) {
+        throw new Error('Erro ao criar conta Telegraph');
+      }
+      
+      const accessToken = accData.result.access_token;
 
-    if (imageFiles.length > 0) {
-      txt += `--- IMAGENS (${imageFiles.length}) ---\n\n`;
-      imageFiles.forEach((f, i) => {
-        txt += `[Imagem ${i + 1}] ${f.name}\n${f.url}\n\n`;
+      // 2. Build content nodes for Telegraph
+      const content: any[] = [];
+
+      // Subtitle
+      content.push({ tag: 'p', children: [`📁 ${files.length} arquivo(s) | ${textBlocks.length} bloco(s) de texto`] });
+      content.push({ tag: 'p', children: ['—'] });
+
+      // Text blocks
+      if (textBlocks.length > 0) {
+        content.push({ tag: 'h3', children: ['📝 Blocos de Texto'] });
+        textBlocks.forEach((tb, i) => {
+          content.push({ tag: 'p', children: [`${i + 1}. ${tb.content || '(vazio)'}`] });
+        });
+      }
+
+      // Images
+      const imageFiles = files.filter(f => f.type?.startsWith('image/'));
+      if (imageFiles.length > 0) {
+        content.push({ tag: 'h3', children: [`🖼️ Imagens (${imageFiles.length})`] });
+        imageFiles.forEach((f) => {
+          content.push({ tag: 'p', children: [{ tag: 'b', children: [f.name] }] });
+          content.push({ tag: 'img', attrs: { src: f.url } });
+          content.push({ tag: 'p', children: [{ tag: 'a', attrs: { href: f.url }, children: [f.url] }] });
+        });
+      }
+
+      // Other files
+      const otherFiles = files.filter(f => !f.type?.startsWith('image/'));
+      if (otherFiles.length > 0) {
+        content.push({ tag: 'h3', children: [`📎 Outros Arquivos (${otherFiles.length})`] });
+        otherFiles.forEach((f) => {
+          content.push({ tag: 'p', children: [
+            { tag: 'b', children: [f.name] },
+            ' — ',
+            { tag: 'a', attrs: { href: f.url }, children: ['Download'] },
+          ]});
+          content.push({ tag: 'p', children: [f.url] });
+        });
+      }
+
+      if (files.length === 0 && textBlocks.length === 0) {
+        content.push({ tag: 'p', children: ['Esta pasta está vazia.'] });
+      }
+
+      // 3. Create the Telegraph page
+      const pageRes = await fetch('https://api.telegra.ph/createPage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_token: accessToken,
+          title: folder.name + ' — Lon Nuvem',
+          author_name: 'Lon Nuvem',
+          content,
+          return_content: false,
+        }),
       });
+      const pageData = await pageRes.json();
+
+      if (!pageData.ok) {
+        throw new Error('Erro ao criar página: ' + JSON.stringify(pageData));
+      }
+
+      const url = pageData.result.url;
+      setPublicLink(url);
+      navigator.clipboard.writeText(url);
+      alert('Link Telegraph gerado e copiado!\n\nCole no ChatGPT:\n' + url);
+
+    } catch (err: any) {
+      console.error(err);
+      alert('Erro: ' + err.message);
     }
-
-    if (otherFiles.length > 0) {
-      txt += `--- OUTROS ARQUIVOS (${otherFiles.length}) ---\n\n`;
-      otherFiles.forEach((f, i) => {
-        txt += `[Arquivo ${i + 1}] ${f.name} (${f.type || 'arquivo'})\n${f.url}\n\n`;
-      });
-    }
-
-    const blob = new Blob([txt], { type: 'text/plain; charset=utf-8' });
-    const filePath = `_share/${folder.slug}.txt`;
-
-    // Delete old version if exists
-    await supabase.storage.from('lon_nuvem').remove([filePath]);
-
-    // Upload new TXT
-    const { error } = await supabase.storage
-      .from('lon_nuvem')
-      .upload(filePath, blob, {
-        contentType: 'text/plain; charset=utf-8',
-        upsert: true,
-      });
-
-    if (error) {
-      console.error('Error uploading share page:', error);
-      alert('Erro ao gerar link: ' + error.message);
-      setGeneratingLink(false);
-      return;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('lon_nuvem')
-      .getPublicUrl(filePath);
-
-    setPublicLink(publicUrl);
-    navigator.clipboard.writeText(publicUrl);
-    alert('Link gerado e copiado!\n\n' + publicUrl);
+    
     setGeneratingLink(false);
   }
 
@@ -235,7 +268,7 @@ export function FolderClient({
     }
 
     navigator.clipboard.writeText(text);
-    alert('Todos os links e textos copiados para a área de transferência!\nCole diretamente no chat do GPT.');
+    alert('Todos os links e textos copiados!\nCole direto no chat do GPT.');
   }
 
   return (
@@ -248,7 +281,7 @@ export function FolderClient({
           </button>
           <button className="btn-primary" onClick={generatePublicPage} disabled={generatingLink}>
             {generatingLink ? <Loader2 size={16} className="spinning" /> : <Share2 size={16} />}
-            {generatingLink ? 'Gerando...' : 'Gerar Arquivo .txt'}
+            {generatingLink ? 'Gerando...' : 'Gerar Link para IA'}
           </button>
         </div>
       </div>

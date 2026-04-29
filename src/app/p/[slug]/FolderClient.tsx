@@ -145,10 +145,11 @@ export function FolderClient({
       <div className="page-header">
         <h1 className="page-title">{folder.name}</h1>
         <button className="btn-secondary" onClick={() => {
-          navigator.clipboard.writeText(window.location.href);
-          alert('Link copiado!');
+          const shareUrl = window.location.origin + '/share/' + folder.slug;
+          navigator.clipboard.writeText(shareUrl);
+          alert('Link público copiado: ' + shareUrl);
         }}>
-          <ExternalLink size={16} /> Copiar Link Público
+          <ExternalLink size={16} /> Copiar Link para IA
         </button>
       </div>
 
@@ -238,6 +239,13 @@ export function FolderClient({
                   </a>
                   <div className={styles.fileInfo}>
                     <div className={styles.fileName} title={f.name}>{f.name}</div>
+                    <a 
+                      href={f.url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className={styles.fileUrl}
+                      title={f.url}
+                    >{f.url}</a>
                   </div>
                 </div>
               )

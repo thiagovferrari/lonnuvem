@@ -145,7 +145,7 @@ export function FolderClient({
       <div className="page-header">
         <h1 className="page-title">{folder.name}</h1>
         <button className="btn-secondary" onClick={() => {
-          const shareUrl = window.location.origin + '/share/' + folder.slug;
+          const shareUrl = window.location.origin + '/api/share/' + folder.slug;
           navigator.clipboard.writeText(shareUrl);
           alert('Link público copiado: ' + shareUrl);
         }}>

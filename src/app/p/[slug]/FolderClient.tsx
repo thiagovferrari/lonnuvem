@@ -151,74 +151,56 @@ export function FolderClient({
     }
   }
 
-  // Generate a static HTML file and upload it to Supabase Storage
+  // Generate a plain text file with all links and upload to Supabase Storage
   async function generatePublicPage() {
     setGeneratingLink(true);
     
     const imageFiles = files.filter(f => f.type?.startsWith('image/'));
     const otherFiles = files.filter(f => !f.type?.startsWith('image/'));
 
-    const html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(folder.name)} - Lon Nuvem</title>
-<meta name="description" content="Pasta publica: ${escapeHtml(folder.name)}. Contem ${files.length} arquivo(s) e ${textBlocks.length} bloco(s) de texto.">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9fafb;color:#1a1a1a;padding:40px 20px;max-width:900px;margin:0 auto;line-height:1.6}
-h1{font-size:28px;margin-bottom:4px}
-h2{font-size:20px;margin:32px 0 16px;border-bottom:1px solid #e5e7eb;padding-bottom:8px;color:#374151}
-.sub{color:#6b7280;margin-bottom:32px;font-size:14px}
-.tb{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px;white-space:pre-wrap}
-.fi{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px}
-.fi img{max-width:100%;height:auto;border-radius:8px;margin-bottom:12px;display:block}
-.fn{font-weight:600;margin-bottom:4px}
-.fl{color:#2563eb;word-break:break-all;font-size:13px;display:block;margin-top:4px}
-.em{color:#9ca3af;padding:20px;text-align:center}
-.bd{display:inline-block;background:#f3f4f6;padding:2px 8px;border-radius:4px;font-size:12px;color:#6b7280;margin-left:8px}
-.ft{margin-top:48px;padding-top:16px;border-top:1px solid #e5e7eb;color:#9ca3af;font-size:12px;text-align:center}
-</style>
-</head>
-<body>
-<h1>${escapeHtml(folder.name)}</h1>
-<p class="sub">Pasta publica do Lon Nuvem — ${files.length} arquivo(s) | ${textBlocks.length} bloco(s) de texto</p>
-${textBlocks.length > 0 ? `<h2>Blocos de Texto</h2>
-${textBlocks.map(tb => `<div class="tb">${escapeHtml(tb.content || '(vazio)')}</div>`).join('\n')}` : ''}
-${imageFiles.length > 0 ? `<h2>Imagens (${imageFiles.length})</h2>
-${imageFiles.map(f => `<div class="fi">
-<img src="${escapeHtml(f.url)}" alt="${escapeHtml(f.name)}">
-<div class="fn">${escapeHtml(f.name)}</div>
-<a class="fl" href="${escapeHtml(f.url)}" target="_blank">${escapeHtml(f.url)}</a>
-</div>`).join('\n')}` : ''}
-${otherFiles.length > 0 ? `<h2>Outros Arquivos (${otherFiles.length})</h2>
-${otherFiles.map(f => `<div class="fi">
-<div class="fn">${escapeHtml(f.name)} <span class="bd">${escapeHtml(f.type || 'arquivo')}</span></div>
-<a class="fl" href="${escapeHtml(f.url)}" target="_blank">${escapeHtml(f.url)}</a>
-</div>`).join('\n')}` : ''}
-${files.length === 0 && textBlocks.length === 0 ? '<p class="em">Esta pasta esta vazia.</p>' : ''}
-<div class="ft">Lon Nuvem</div>
-</body>
-</html>`;
+    let txt = `PASTA: ${folder.name}\n`;
+    txt += `Lon Nuvem - Pasta Publica\n`;
+    txt += `${files.length} arquivo(s) | ${textBlocks.length} bloco(s) de texto\n`;
+    txt += `${'='.repeat(60)}\n\n`;
 
-    const blob = new Blob([html], { type: 'text/html' });
-    const filePath = `_share/${folder.slug}.html`;
+    if (textBlocks.length > 0) {
+      txt += `--- BLOCOS DE TEXTO ---\n\n`;
+      textBlocks.forEach((tb, i) => {
+        txt += `[Texto ${i + 1}]\n${tb.content || '(vazio)'}\n\n`;
+      });
+    }
+
+    if (imageFiles.length > 0) {
+      txt += `--- IMAGENS (${imageFiles.length}) ---\n\n`;
+      imageFiles.forEach((f, i) => {
+        txt += `[Imagem ${i + 1}] ${f.name}\n${f.url}\n\n`;
+      });
+    }
+
+    if (otherFiles.length > 0) {
+      txt += `--- OUTROS ARQUIVOS (${otherFiles.length}) ---\n\n`;
+      otherFiles.forEach((f, i) => {
+        txt += `[Arquivo ${i + 1}] ${f.name} (${f.type || 'arquivo'})\n${f.url}\n\n`;
+      });
+    }
+
+    const blob = new Blob([txt], { type: 'text/plain; charset=utf-8' });
+    const filePath = `_share/${folder.slug}.txt`;
 
     // Delete old version if exists
     await supabase.storage.from('lon_nuvem').remove([filePath]);
 
-    // Upload new HTML
+    // Upload new TXT
     const { error } = await supabase.storage
       .from('lon_nuvem')
       .upload(filePath, blob, {
-        contentType: 'text/html',
+        contentType: 'text/plain; charset=utf-8',
         upsert: true,
       });
 
     if (error) {
       console.error('Error uploading share page:', error);
-      alert('Erro ao gerar página: ' + error.message);
+      alert('Erro ao gerar link: ' + error.message);
       setGeneratingLink(false);
       return;
     }
@@ -229,18 +211,44 @@ ${files.length === 0 && textBlocks.length === 0 ? '<p class="em">Esta pasta esta
 
     setPublicLink(publicUrl);
     navigator.clipboard.writeText(publicUrl);
-    alert('Link público gerado e copiado!\n\n' + publicUrl);
+    alert('Link gerado e copiado!\n\n' + publicUrl);
     setGeneratingLink(false);
+  }
+
+  // Copy all image/file URLs to clipboard for pasting in ChatGPT
+  function copyAllLinks() {
+    let text = `📁 Pasta: ${folder.name}\n\n`;
+    
+    if (textBlocks.length > 0) {
+      text += `📝 Textos:\n`;
+      textBlocks.forEach((tb, i) => {
+        text += `${i + 1}. ${tb.content || '(vazio)'}\n`;
+      });
+      text += `\n`;
+    }
+
+    if (files.length > 0) {
+      text += `📎 Links diretos dos arquivos:\n`;
+      files.forEach((f, i) => {
+        text += `${i + 1}. ${f.name}: ${f.url}\n`;
+      });
+    }
+
+    navigator.clipboard.writeText(text);
+    alert('Todos os links e textos copiados para a área de transferência!\nCole diretamente no chat do GPT.');
   }
 
   return (
     <>
       <div className="page-header">
         <h1 className="page-title">{folder.name}</h1>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button className="btn-secondary" onClick={copyAllLinks}>
+            <ExternalLink size={16} /> Copiar Links
+          </button>
           <button className="btn-primary" onClick={generatePublicPage} disabled={generatingLink}>
             {generatingLink ? <Loader2 size={16} className="spinning" /> : <Share2 size={16} />}
-            {generatingLink ? 'Gerando...' : 'Gerar Link para IA'}
+            {generatingLink ? 'Gerando...' : 'Gerar Arquivo .txt'}
           </button>
         </div>
       </div>
